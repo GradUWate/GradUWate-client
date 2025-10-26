@@ -54,8 +54,8 @@ export default function CourseInfo() {
 
   return (
     <div className="flex h-[calc(100vh-3rem)] p-4 gap-4 overflow-hidden">
-      <aside className="w-1/3 h-full bg-white border rounded-md p-4 flex flex-col">
-        <div className="mb-4 shrink-0">
+      <aside className="w-1/4 flex-shrink-0 h-full bg-white border rounded-md p-4 flex flex-col">
+        <div className="mb-4 w-full min-w-0">
           <SearchSelect
             options={mockCourses}
             placeholder="Search or select a course..."
@@ -120,7 +120,9 @@ export default function CourseInfo() {
           )}
         </Card>
       </aside>
-      <Card className="w-full h-full bg-gray-200 px-4">Course Pathways</Card>
+      <Card className="flex-1 flex-shrink-0 h-full bg-gray-200 px-4">
+        Course Pathways
+      </Card>
     </div>
   );
 }

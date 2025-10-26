@@ -20,7 +20,7 @@ export default function Schedule() {
 
   return (
     <div className="flex h-[calc(100vh-3rem)] p-4 gap-4 overflow-hidden">
-      <aside className="w-1/4 h-full bg-white border rounded-md p-4 space-y-4 shrink-0">
+      <aside className="w-1/4 h-full bg-white border rounded-md p-4 flex flex-col gap-4 overflow-y-auto">
         <h2>Relevant Courses</h2>
         <Section
           title="Major"

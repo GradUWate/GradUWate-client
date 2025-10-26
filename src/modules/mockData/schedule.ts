@@ -16,6 +16,7 @@ export const mockRequirements = {
     { code: "GHI 345" },
     { code: "JKL 456" },
     { code: "MNO 567" },
+    { code: "PQR 678" },
   ],
   minor: [{ code: "MIN 101" }, { code: "MIN 102" }],
   specialization: [{ code: "SPE 201" }, { code: "SPE 202" }],

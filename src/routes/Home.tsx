@@ -51,9 +51,6 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <p>4 Courses • 15 Credits</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Includes CSE 421, CSE 444, MATH 324...
-            </p>
           </CardContent>
           <div className="flex justify-end gap-2 px-4">
             <Button variant="outline">Edit</Button>
@@ -69,9 +66,6 @@ export default function Home() {
           </CardHeader>
           <CardContent>
             <p>3 Courses • 12 Credits</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Includes CSE 331, STAT 390, ENGL 131...
-            </p>
           </CardContent>
           <div className="flex justify-end gap-2 px-4">
             <Button variant="outline">Edit</Button>
