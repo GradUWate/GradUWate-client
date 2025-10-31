@@ -7,7 +7,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 
-export default function Home() {
+export function Home() {
   return (
     <div className="p-6 space-y-6">
       <div className="rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 text-white p-6 shadow-md">

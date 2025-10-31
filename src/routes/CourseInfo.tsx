@@ -44,7 +44,7 @@ const courseData: CourseData[] = [
   },
 ];
 
-export default function CourseInfo() {
+export function CourseInfo() {
   const [selectedCourse, setSelectedCourse] = useState<CourseData | null>(null);
 
   const handleSelect = (value: string) => {

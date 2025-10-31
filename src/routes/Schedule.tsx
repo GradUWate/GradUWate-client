@@ -1,25 +1,125 @@
 import { useState } from "react";
-import { ChevronDown, ChevronUp, GripVertical } from "lucide-react";
+import {
+  DndContext,
+  closestCenter,
+  DragOverlay,
+  useSensor,
+  useSensors,
+  MouseSensor,
+  TouchSensor,
+} from "@dnd-kit/core";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { SearchSelect } from "@/components/atomic/SearchBar";
 import {
   mockCourses,
   mockRequirements,
-  terms,
+  mockTerms as initialTerms,
   type Course,
   type Term,
 } from "@/modules/mockData/schedule";
-import { Button } from "@/components/ui/button";
-import { SearchSelect } from "@/components/atomic/SearchBar";
+import { TermColumn, Section } from "@/components/screens/schedule";
 
-export default function Schedule() {
+export function Schedule() {
   const [expanded, setExpanded] = useState({
     major: true,
     minor: false,
     specialization: false,
   });
 
+  const [terms, setTerms] = useState<Term[]>(initialTerms);
+  const [activeCourse, setActiveCourse] = useState<Course | null>(null);
+
+  const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
+
+  const findContainer = (courseId: string) => {
+    for (const term of terms) {
+      if (term.courses.some((c) => c.code === courseId)) return term.id;
+    }
+    return null;
+  };
+
+  // flatten all available courses
+  const allCourses = [
+    ...terms.flatMap((term) => term.courses),
+    ...Object.values(mockRequirements).flatMap((reqCourses) => reqCourses),
+  ];
+
+  function handleDragStart(event: any) {
+    const { active } = event;
+    const containerId = findContainer(active.id);
+
+    // course dragged from sidebar
+    if (!containerId) {
+      const course = allCourses.find((c) => c.code === active.id);
+      if (course) setActiveCourse(course);
+      return;
+    }
+
+    // course dragged from a term
+    const course = terms
+      .find((t) => t.id === containerId)
+      ?.courses.find((c) => c.code === active.id);
+    if (course) setActiveCourse(course);
+  }
+
+  function handleDragOver(event: any) {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeContainer = findContainer(active.id);
+    const overContainer = findContainer(over.id);
+
+    // move between terms
+    if (activeContainer && overContainer && activeContainer !== overContainer) {
+      setTerms((prev) => {
+        const activeTerm = prev.find((t) => t.id === activeContainer)!;
+        const activeCourse = activeTerm.courses.find(
+          (c) => c.code === active.id
+        )!;
+        return prev.map((t) => {
+          if (t.id === activeContainer) {
+            return {
+              ...t,
+              courses: t.courses.filter((c) => c.code !== active.id),
+            };
+          }
+          if (t.id === overContainer) {
+            return {
+              ...t,
+              courses: [...t.courses, activeCourse],
+            };
+          }
+          return t;
+        });
+      });
+    }
+  }
+
+  const handleDragEnd = (event: any) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    // If dropped over a term
+    if (
+      over.data.current?.type === "term" &&
+      active.data.current?.type === "course"
+    ) {
+      const droppedCourse = active.data.current.course;
+      const termId = over.id;
+
+      setTerms((prev) =>
+        prev.map((t) =>
+          t.id === termId ? { ...t, courses: [...t.courses, droppedCourse] } : t
+        )
+      );
+    }
+  };
+
   return (
     <div className="flex h-[calc(100vh-3rem)] p-4 gap-4 overflow-hidden">
+      {/* Sidebar */}
       <aside className="w-1/4 h-full bg-white border rounded-md p-4 flex flex-col gap-4 overflow-y-auto">
         <h2>Relevant Courses</h2>
         <Section
@@ -54,6 +154,8 @@ export default function Schedule() {
           />
         </div>
       </aside>
+
+      {/* Terms */}
       <div className="flex flex-col gap-2 flex-1 min-w-0 h-full">
         <Card className="flex flex-row justify-between gap-4 px-4 items-center">
           <div>
@@ -62,67 +164,26 @@ export default function Schedule() {
           </div>
           <Button>Add additional study term</Button>
         </Card>
+
         <main className="flex gap-4 overflow-x-auto pb-4 h-full scrollbar-thin">
-          {terms.map((term: Term) => (
-            <div
-              key={term.id}
-              className="flex-1 min-w-[250px] bg-white border rounded-md p-4"
-            >
-              <h2 className="text-lg font-semibold mb-3">{term.name}</h2>
-              <div className="space-y-2">
-                {term.courses.map((course: Course) => (
-                  <Card
-                    key={course.code}
-                    className="flex flex-row items-start gap-2 p-3 bg-gray-100"
-                  >
-                    <GripVertical className="w-4 h-4 mt-1 text-gray-500" />
-                    <div>
-                      <p className="font-medium">{course.code}</p>
-                      <p className="text-sm text-gray-500">
-                        {course.description}
-                      </p>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          ))}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+          >
+            {terms.map((term) => (
+              <TermColumn term={term} />
+            ))}
+            <DragOverlay>
+              {activeCourse ? (
+                <Card className="h-20 bg-gray-300 rounded-md shadow-inner opacity-70" />
+              ) : null}
+            </DragOverlay>
+          </DndContext>
         </main>
       </div>
-    </div>
-  );
-}
-
-type SectionProps = {
-  title: string;
-  expanded: boolean;
-  onToggle: () => void;
-  items: { code: string }[];
-};
-
-function Section({ title, expanded, onToggle, items }: SectionProps) {
-  return (
-    <div className="border-b pb-2">
-      <button
-        onClick={onToggle}
-        className="w-full flex justify-between items-center text-left font-semibold text-gray-700"
-      >
-        <span>{title}</span>
-        {expanded ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-      </button>
-      {expanded && (
-        <div className="mt-2 space-y-2">
-          {items.map((item) => (
-            <Card
-              key={item.code}
-              className="flex flex-row items-center p-3 bg-gray-100"
-            >
-              <GripVertical className="w-4 h-4 text-gray-500" />
-              <span>{item.code}</span>
-            </Card>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
