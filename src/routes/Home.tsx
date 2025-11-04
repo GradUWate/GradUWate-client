@@ -6,8 +6,11 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import { useNavigate } from "react-router-dom";
 
 export function Home() {
+  const navigate = useNavigate();
+
   return (
     <div className="p-6 space-y-6">
       <div className="rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 text-white p-6 shadow-md">
@@ -53,7 +56,9 @@ export function Home() {
             <p>4 Courses • 15 Credits</p>
           </CardContent>
           <div className="flex justify-end gap-2 px-4">
-            <Button variant="outline">Edit</Button>
+            <Button variant="outline" onClick={() => navigate("/schedule")}>
+              Edit
+            </Button>
             <Button variant="destructive">Delete</Button>
           </div>
         </Card>
@@ -68,7 +73,9 @@ export function Home() {
             <p>3 Courses • 12 Credits</p>
           </CardContent>
           <div className="flex justify-end gap-2 px-4">
-            <Button variant="outline">Edit</Button>
+            <Button variant="outline" onClick={() => navigate("/schedule")}>
+              Edit
+            </Button>
             <Button variant="destructive">Delete</Button>
           </div>
         </Card>

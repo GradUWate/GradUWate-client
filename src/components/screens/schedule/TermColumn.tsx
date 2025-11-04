@@ -14,7 +14,7 @@ export function TermColumn({ term }: { term: Term }) {
 
   return (
     <div
-      className="relative flex-1 min-w-[250px] bg-white border rounded-md p-4"
+      className="relative flex-1 min-w-[300px] bg-white border rounded-md p-4"
       ref={setTermRef}
     >
       <h2 className="text-lg font-semibold mb-3">{term.name}</h2>
