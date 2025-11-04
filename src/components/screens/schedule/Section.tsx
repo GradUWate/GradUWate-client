@@ -1,5 +1,5 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { SortableCourseTile } from "./CourseTile";
+import { DraggableCourseTile } from "./CourseTile";
 import type { Course } from "@/modules/mockData/schedule";
 
 type SectionProps = {
@@ -22,7 +22,7 @@ export function Section({ title, expanded, onToggle, items }: SectionProps) {
       {expanded && (
         <div className="mt-2 space-y-2">
           {items.map((item) => (
-            <SortableCourseTile key={item.code} course={item} />
+            <DraggableCourseTile key={item.code} course={item} />
           ))}
         </div>
       )}

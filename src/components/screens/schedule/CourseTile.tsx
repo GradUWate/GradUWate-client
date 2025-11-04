@@ -7,7 +7,10 @@ import { useDraggable } from "@dnd-kit/core";
 
 export function SortableCourseTile({ course }: { course: Course }) {
   const { attributes, listeners, setNodeRef, transform, transition } =
-    useSortable({ id: course.code });
+    useSortable({
+      id: course.id,
+      data: { type: "course", course },
+    });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -36,7 +39,7 @@ export function SortableCourseTile({ course }: { course: Course }) {
 export function DraggableCourseTile({ course }: { course: Course }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
-      id: course.code,
+      id: course.id,
       data: { type: "course", course },
     });
 
@@ -48,11 +51,20 @@ export function DraggableCourseTile({ course }: { course: Course }) {
   };
 
   return (
-    <div ref={setNodeRef} {...attributes} {...listeners} style={style}>
-      <Card className="p-2 bg-gray-100 rounded-md shadow-sm">
-        <div className="font-semibold">{course.code}</div>
-        <div className="text-sm text-gray-500">{course.description}</div>
-      </Card>
-    </div>
+    <Card
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      className="flex flex-row items-start gap-2 p-3 bg-gray-100 cursor-grab active:cursor-grabbing"
+    >
+      <GripVertical className="w-4 h-4 mt-1 text-gray-500" />
+      <div>
+        <p className="font-medium">{course.code}</p>
+        {course.description && (
+          <p className="text-sm text-gray-500">{course.description}</p>
+        )}
+      </div>
+    </Card>
   );
 }
