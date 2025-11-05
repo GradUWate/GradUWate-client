@@ -33,7 +33,19 @@ export function Schedule() {
   const [terms, setTerms] = useState<Term[]>(initialTerms);
   const [activeCourse, setActiveCourse] = useState<Course | null>(null);
 
-  const sensors = useSensors(useSensor(MouseSensor), useSensor(TouchSensor));
+  const sensors = useSensors(
+    useSensor(MouseSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: {
+        delay: 200,
+        tolerance: 5,
+      },
+    })
+  );
 
   const findContainer = (courseId: string) => {
     for (const term of terms) {
@@ -42,7 +54,6 @@ export function Schedule() {
     return null;
   };
 
-  // flatten all available courses
   const allCourses = [
     ...terms.flatMap((term) => term.courses),
     ...Object.values(mockRequirements).flatMap((reqCourses) => reqCourses),
@@ -52,14 +63,14 @@ export function Schedule() {
     const { active } = event;
     const containerId = findContainer(active.id);
 
-    // course dragged from sidebar
+    //sidebar course
     if (!containerId) {
       const course = allCourses.find((c) => c.id === active.id);
       if (course) setActiveCourse(course);
       return;
     }
 
-    // course dragged from a term
+    //pre-existing course
     const course = terms
       .find((t) => t.id === containerId)
       ?.courses.find((c) => c.id === active.id);
@@ -73,12 +84,15 @@ export function Schedule() {
     const activeContainer = findContainer(active.id as string);
     const overContainer = findContainer(over.id as string);
 
-    if (activeContainer && overContainer && activeContainer !== overContainer) {
+    const moveBetweenTerms =
+      activeContainer && overContainer && activeContainer !== overContainer;
+    if (moveBetweenTerms) {
       setTerms((prev) => {
         const activeTerm = prev.find((t) => t.id === activeContainer)!;
         const activeCourse = activeTerm.courses.find(
           (c) => c.id === active.id
         )!;
+
         return prev.map((t) => {
           if (t.id === activeContainer) {
             return {
@@ -87,19 +101,84 @@ export function Schedule() {
             };
           }
           if (t.id === overContainer) {
+            const overIndex = t.courses.findIndex((c) => c.id === over.id);
+            const newCourses = [...t.courses];
+            newCourses.splice(overIndex, 0, activeCourse);
             return {
               ...t,
-              courses: [...t.courses, activeCourse],
+              courses: newCourses,
             };
           }
           return t;
         });
       });
     }
+
+    if (!activeContainer && overContainer) {
+      const activeData = active.data.current;
+      if (activeData?.type === "course") {
+        const activeCourse = activeData.course;
+        setTerms((prev) => {
+          return prev.map((t) => {
+            if (t.id === overContainer) {
+              const tempCourseExists = t.courses.some((c) =>
+                c.id.startsWith(`temp-${activeCourse.id}`)
+              );
+
+              if (tempCourseExists) {
+                const tempCourse = t.courses.find((c) =>
+                  c.id.startsWith(`temp-${activeCourse.id}`)
+                )!;
+                const currentIndex = t.courses.indexOf(tempCourse);
+                const overIndex = t.courses.findIndex((c) => c.id === over.id);
+
+                if (overIndex !== -1 && currentIndex !== overIndex) {
+                  const newCourses = t.courses.filter((c) => c !== tempCourse);
+                  newCourses.splice(overIndex, 0, tempCourse);
+                  return { ...t, courses: newCourses };
+                }
+              } else {
+                const tempCourse: Course = {
+                  ...activeCourse,
+                  id: `temp-${activeCourse.id}`,
+                };
+
+                const overIndex = t.courses.findIndex((c) => c.id === over.id);
+                const newCourses = [...t.courses];
+
+                if (overIndex !== -1) {
+                  newCourses.splice(overIndex, 0, tempCourse);
+                } else {
+                  newCourses.push(tempCourse);
+                }
+
+                return { ...t, courses: newCourses };
+              }
+            } else {
+              return {
+                ...t,
+                courses: t.courses.filter(
+                  (c) => !c.id.startsWith(`temp-${activeCourse.id}`)
+                ),
+              };
+            }
+            return t;
+          });
+        });
+      }
+    }
   }
 
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
+
+    setTerms((prev) =>
+      prev.map((t) => ({
+        ...t,
+        courses: t.courses.filter((c) => !c.id.startsWith("temp-")),
+      }))
+    );
+
     if (!over) return;
 
     const activeData = active.data.current;
@@ -113,9 +192,9 @@ export function Schedule() {
 
     const targetTerm = terms.find((t) => t.id === targetTermId);
     if (!targetTerm) return;
+
     const fromSidebar = !activeData?.sortable?.containerId;
 
-    console.log(fromSidebar, activeData?.type);
     if (fromSidebar && activeData?.type === "course") {
       const activeCourse = activeData.course;
       const newCourse: Course = {
@@ -123,12 +202,22 @@ export function Schedule() {
         id: `${activeCourse.id}-${Math.random().toString(36).slice(2, 6)}`,
         code: activeCourse.code,
       };
+
+      const overIndex = targetTerm.courses.findIndex((c) => c.id === over.id);
+
       setTerms((prevTerms) =>
-        prevTerms.map((t) =>
-          t.id === targetTermId
-            ? { ...t, courses: [...t.courses, newCourse] }
-            : t
-        )
+        prevTerms.map((t) => {
+          if (t.id === targetTermId) {
+            const newCourses = [...t.courses];
+            if (overIndex !== -1) {
+              newCourses.splice(overIndex, 0, newCourse);
+            } else {
+              newCourses.push(newCourse);
+            }
+            return { ...t, courses: newCourses };
+          }
+          return t;
+        })
       );
     } else if (activeData?.type === "course") {
       const activeCourse = activeData.course;
@@ -218,7 +307,12 @@ export function Schedule() {
           </main>
         </div>
 
-        <DragOverlay>
+        <DragOverlay
+          dropAnimation={{
+            duration: 300,
+            easing: "cubic-bezier(0.18, 0.67, 0.6, 1.22)",
+          }}
+        >
           {activeCourse ? (
             <Card className="h-20 bg-gray-300 rounded-md shadow-inner opacity-70" />
           ) : null}
