@@ -1,4 +1,4 @@
-import { get } from "./BaseClient";
+import { get } from "./axios";
 
 export type ReqCourse = {
     id: string;
