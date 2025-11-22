@@ -6,7 +6,6 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { NavbarTabs } from "./components/NavbarTabs";
-import "./App.css";
 import { CourseInfo, Home, Schedule } from "./routes";
 
 function AnimatedRoutes() {
