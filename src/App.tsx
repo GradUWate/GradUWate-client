@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { NavbarTabs } from "./components/NavbarTabs";
-import { CourseInfo, Home, Schedule } from "./routes";
+import { CourseInfo, Home, Schedule, Test } from "./routes";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -38,7 +38,16 @@ function AnimatedRoutes() {
             </PageTransition>
           }
         />
+        <Route
+          path="/test"
+          element={
+            <PageTransition>
+              <Test />
+            </PageTransition>
+          }
+        />
       </Routes>
+      
     </AnimatePresence>
   );
 }
