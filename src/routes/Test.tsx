@@ -6,7 +6,14 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { getCourseBackPathById, getCourseById, getCourseFrontPathById, type Course, type CoursePath } from "@/hooks/CourseClient";
+import {
+  getAllCourses,
+  getCourseBackPathById,
+  getCourseById,
+  getCourseFrontPathById,
+  type Course,
+  type CoursePath,
+} from "@/hooks/CourseClient";
 
 export function Test() {
   const [course, setCourse] = useState<Course | null>(null);
@@ -15,6 +22,7 @@ export function Test() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [allCourses, setAllCourses] = useState<Course[] | null>(null);
   // Fetch course on mount
   useEffect(() => {
     const loadCourse = async () => {
@@ -28,7 +36,6 @@ export function Test() {
       }
     };
 
-
     const loadCourseFrontPath = async () => {
       try {
         const result = await getCourseFrontPathById("CS-341"); // OR "123" depending on backend
@@ -39,7 +46,6 @@ export function Test() {
         setLoading(false);
       }
     };
-
 
     const loadCourseBackPath = async () => {
       try {
@@ -52,9 +58,21 @@ export function Test() {
       }
     };
 
+    const loadAllCourses = async () => {
+      try {
+        const result = await getAllCourses(); // OR "123" depending on backend
+        setAllCourses(result);
+      } catch (err: unknown) {
+        setError(`Failed to load courses ${err}`);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     loadCourse();
     loadCourseFrontPath();
     loadCourseBackPath();
+    loadAllCourses();
   }, []);
 
   return (
@@ -108,7 +126,6 @@ export function Test() {
         </CardContent>
       </Card>
 
-
       <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Course Front Path</CardTitle>
@@ -134,7 +151,9 @@ export function Test() {
               {frontPath.links && frontPath.links?.length > 0 ? (
                 <ul className="list-disc ml-6">
                   {frontPath.links?.map((p) => (
-                    <li key={p.start}>Start: {p.start}. End: {p.end}</li>
+                    <li key={p.start}>
+                      Start: {p.start}. End: {p.end}
+                    </li>
                   ))}
                 </ul>
               ) : (
@@ -167,11 +186,13 @@ export function Test() {
                 <p>No backpath</p>
               )}
 
-                <p className="font-medium mt-3">Back path links:</p>
+              <p className="font-medium mt-3">Back path links:</p>
               {backPath.links && backPath.links?.length > 0 ? (
                 <ul className="list-disc ml-6">
                   {backPath.links?.map((p) => (
-                    <li key={p.start}>Start: {p.start}. End: {p.end}</li>
+                    <li key={p.start}>
+                      Start: {p.start}. End: {p.end}
+                    </li>
                   ))}
                 </ul>
               ) : (
@@ -180,6 +201,24 @@ export function Test() {
             </div>
           )}
         </CardContent>
+      </Card>
+      <Card>
+        {allCourses && (
+          <div className="space-y-2">
+            <p className="font-medium mt-3">All Courses:</p>
+            {allCourses && allCourses?.length > 0 ? (
+              <ul className="list-disc ml-6">
+                {allCourses?.map((p) => (
+                  <li key={p.id}>
+                    {p.code} - {p.title}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>No courses found</p>
+            )}
+          </div>
+        )}
       </Card>
     </div>
   );

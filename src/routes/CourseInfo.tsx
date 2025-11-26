@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { mockCourses } from "@/modules/mockData/schedule";
 import { SearchSelect } from "@/components/atomic/SearchBar";
 import { Separator } from "@/components/ui/separator";
 import { Star } from "lucide-react";
+import { useNavigate, useParams } from "react-router-dom";
 
 type CourseData = {
   value: string;
@@ -45,12 +46,25 @@ const courseData: CourseData[] = [
 ];
 
 export function CourseInfo() {
+  const { courseId } = useParams();
   const [selectedCourse, setSelectedCourse] = useState<CourseData | null>(null);
+  const navigate = useNavigate();
 
   const handleSelect = (value: string) => {
-    const found = courseData.find((c) => c.value === value) || null;
-    setSelectedCourse(found);
+    navigate(`/course-info/${value}`);
   };
+
+  useEffect(() => {
+    if (!courseId) {
+      navigate("/course-info");
+    }
+    const courseFound = courseData.find((c) => c.value === courseId) || null;
+    if (!courseFound) {
+      navigate("/course-info");
+      return;
+    }
+    setSelectedCourse(courseFound);
+  }, [courseId, navigate]);
 
   return (
     <div className="flex h-[calc(100vh-3rem)] p-4 gap-4 overflow-hidden">

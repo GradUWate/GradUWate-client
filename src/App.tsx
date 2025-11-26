@@ -7,6 +7,8 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { NavbarTabs } from "./components/NavbarTabs";
 import { CourseInfo, Home, Schedule, Test } from "./routes";
+import { TestGraph } from "./routes/TestGraph";
+import { CourseInfoHome } from "./routes/CourseInfoHome";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -23,10 +25,18 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/course-info"
+          path="/course-info/:courseId"
           element={
             <PageTransition>
               <CourseInfo />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/course-info"
+          element={
+            <PageTransition>
+              <CourseInfoHome />
             </PageTransition>
           }
         />
@@ -46,8 +56,15 @@ function AnimatedRoutes() {
             </PageTransition>
           }
         />
+        <Route
+          path="/test-graph"
+          element={
+            <PageTransition>
+              <TestGraph />
+            </PageTransition>
+          }
+        />
       </Routes>
-      
     </AnimatePresence>
   );
 }

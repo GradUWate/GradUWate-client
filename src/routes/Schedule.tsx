@@ -300,7 +300,7 @@ export function Schedule() {
             <Button>Add additional study term</Button>
           </Card>
 
-          <main className="flex gap-4 overflow-x-auto pb-4 h-full scrollbar-thin">
+          <main className="flex gap-4 overflow-x-auto h-full scrollbar-thin">
             {terms.map((term) => (
               <TermColumn term={term} />
             ))}
