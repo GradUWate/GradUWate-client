@@ -9,6 +9,7 @@ import { NavbarTabs } from "./components/NavbarTabs";
 import { CourseInfo, Home, Schedule, Test } from "./routes";
 import { CourseInfoHome } from "./routes/CourseInfoHome";
 import { CoursesProvider } from "./contexts/CoursesContext";
+import { SchedulesProvider } from "./contexts/SchedulesContext";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -41,7 +42,7 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/schedule"
+          path="/schedule/:scheduleId"
           element={
             <PageTransition>
               <Schedule />
@@ -78,12 +79,14 @@ function App() {
   return (
     <Router>
       <CoursesProvider>
-        <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
-          <NavbarTabs />
-          <main className="flex-1">
-            <AnimatedRoutes />
-          </main>
-        </div>
+        <SchedulesProvider>
+          <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
+            <NavbarTabs />
+            <main className="flex-1">
+              <AnimatedRoutes />
+            </main>
+          </div>
+        </SchedulesProvider>
       </CoursesProvider>
     </Router>
   );

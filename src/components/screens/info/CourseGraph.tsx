@@ -129,74 +129,79 @@ export function CourseGraph({ targetCourseId }: { targetCourseId?: string }) {
   const NODE_RADIUS = 12;
 
   return (
-    <Card className="h-full bg-gray-200 px-4">
+    <Card className="w-full h-full bg-gray-200 px-4 py-4 flex flex-col overflow-hidden">
       <h1 className="text-2xl font-semibold mb-4">Course Pathway Graph</h1>
-
       {error && <p className="text-red-500">{error}</p>}
       {loading && <p>Loading course pathways...</p>}
       {!loading && !error && targetCourseId && graphData ? (
-        <ForceGraph2D
-          graphData={graphData}
-          onNodeClick={(node) => {
-            navigate(`/course-info/${node.id}`);
-          }}
-          linkDirectionalArrowLength={0} // disable built-in arrows
-          linkCanvasObjectMode={() => "after"}
-          linkCanvasObject={(link: GraphLink, ctx) => {
-            const start = link.source as GraphNode;
-            const end = link.target as GraphNode;
+        <div className="flex-1 min-h-0 w-full">
+          <ForceGraph2D
+            graphData={graphData}
+            width={undefined}
+            height={undefined}
+            onNodeClick={(node) => {
+              navigate(`/course-info/${node.id}`);
+            }}
+            linkDirectionalArrowLength={0} // disable built-in arrows
+            linkCanvasObjectMode={() => "after"}
+            linkCanvasObject={(link: GraphLink, ctx) => {
+              const start = link.source as GraphNode;
+              const end = link.target as GraphNode;
 
-            if (!start.x || !start.y || !end.x || !end.y) return;
+              if (!start.x || !start.y || !end.x || !end.y) return;
 
-            const headSize = 8; // arrow head size
-            const angle = Math.atan2(end.y - start.y, end.x - start.x);
+              const headSize = 8; // arrow head size
+              const angle = Math.atan2(end.y - start.y, end.x - start.x);
 
-            // Adjust arrow tip to be at the circle boundary instead of the center
-            const endX = end.x - NODE_RADIUS * Math.cos(angle);
-            const endY = end.y - NODE_RADIUS * Math.sin(angle);
+              // Adjust arrow tip to be at the circle boundary instead of the center
+              const endX = end.x - NODE_RADIUS * Math.cos(angle);
+              const endY = end.y - NODE_RADIUS * Math.sin(angle);
 
-            // Draw the line
-            ctx.strokeStyle = "#000";
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(start.x, start.y);
-            ctx.lineTo(endX, endY); // <-- use adjusted endpoint
-            ctx.stroke();
+              // Draw the line
+              ctx.strokeStyle = "#000";
+              ctx.lineWidth = 1.5;
+              ctx.beginPath();
+              ctx.moveTo(start.x, start.y);
+              ctx.lineTo(endX, endY); // <-- use adjusted endpoint
+              ctx.stroke();
 
-            // Draw arrowhead (also using adjusted endpoint)
-            ctx.fillStyle = "#000";
-            ctx.beginPath();
-            ctx.moveTo(endX, endY);
-            ctx.lineTo(
-              endX - headSize * Math.cos(angle - Math.PI / 6),
-              endY - headSize * Math.sin(angle - Math.PI / 6)
-            );
-            ctx.lineTo(
-              endX - headSize * Math.cos(angle + Math.PI / 6),
-              endY - headSize * Math.sin(angle + Math.PI / 6)
-            );
-            ctx.closePath();
-            ctx.fill();
-          }}
-          nodeCanvasObject={(node: GraphNode, ctx) => {
-            if (!node.x || !node.y) return;
-            const label = node.name;
+              // Draw arrowhead (also using adjusted endpoint)
+              ctx.fillStyle = "#000";
+              ctx.beginPath();
+              ctx.moveTo(endX, endY);
+              ctx.lineTo(
+                endX - headSize * Math.cos(angle - Math.PI / 6),
+                endY - headSize * Math.sin(angle - Math.PI / 6)
+              );
+              ctx.lineTo(
+                endX - headSize * Math.cos(angle + Math.PI / 6),
+                endY - headSize * Math.sin(angle + Math.PI / 6)
+              );
+              ctx.closePath();
+              ctx.fill();
+            }}
+            nodeCanvasObject={(node: GraphNode, ctx) => {
+              if (!node.x || !node.y) return;
+              const label = node.name;
 
-            // Draw circle
-            ctx.fillStyle =
-              targetCourseId === node.id ? "#60a5fa" : node.color || "#60a5fa";
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, NODE_RADIUS, 0, 2 * Math.PI);
-            ctx.fill();
+              // Draw circle
+              ctx.fillStyle =
+                targetCourseId === node.id
+                  ? "#60a5fa"
+                  : node.color || "#60a5fa";
+              ctx.beginPath();
+              ctx.arc(node.x, node.y, NODE_RADIUS, 0, 2 * Math.PI);
+              ctx.fill();
 
-            // Draw text inside circle
-            ctx.fillStyle = "#000"; // white text looks nicer
-            ctx.font = "8px Sans-Serif"; // make text smaller
-            ctx.textAlign = "center"; // horizontally centered
-            ctx.textBaseline = "middle"; // vertically centered
-            ctx.fillText(label, node.x, node.y); // draw in middle
-          }}
-        />
+              // Draw text inside circle
+              ctx.fillStyle = "#000"; // white text looks nicer
+              ctx.font = "8px Sans-Serif"; // make text smaller
+              ctx.textAlign = "center"; // horizontally centered
+              ctx.textBaseline = "middle"; // vertically centered
+              ctx.fillText(label, node.x, node.y); // draw in middle
+            }}
+          />
+        </div>
       ) : (
         !loading && !error && <p>Select a course to view its pathway graph</p>
       )}

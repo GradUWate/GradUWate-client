@@ -4,9 +4,9 @@ import {
 } from "@dnd-kit/sortable";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableCourseTile } from "./CourseTile";
-import type { Term } from "@/modules/mockData/schedule";
+import type { ScheduleTerm } from "@/contexts/SchedulesContext";
 
-export function TermColumn({ term }: { term: Term }) {
+export function TermColumn({ term }: { term: ScheduleTerm }) {
   const { setNodeRef: setTermRef } = useDroppable({
     id: term.id,
     data: { type: "term" },
