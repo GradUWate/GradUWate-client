@@ -58,28 +58,6 @@ export function Home() {
         </p>
       </div>
 
-      {/* Profile Info Card */}
-      {/* <Card className="shadow-sm">
-        <CardHeader>
-          <CardTitle>Profile Info</CardTitle>
-          <CardDescription>Your default academic details</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-2">
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Major:</span>
-            <span>Computer Science</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Minor:</span>
-            <span>None chosen</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="font-medium text-gray-700">Specialization:</span>
-            <span>None chosen</span>
-          </div>
-        </CardContent>
-      </Card> */}
-
       {/* Drafted Schedules */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">

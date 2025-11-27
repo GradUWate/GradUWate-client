@@ -325,40 +325,6 @@ export function Schedule() {
             }
             items={sidebarCourses}
           />
-          {/* <Section
-            title="Major"
-            expanded={expanded.major}
-            onToggle={() =>
-              setExpanded({ ...expanded, major: !expanded.major })
-            }
-            items={mockRequirements.major}
-          />
-          <Section
-            title="Minor"
-            expanded={expanded.minor}
-            onToggle={() =>
-              setExpanded({ ...expanded, minor: !expanded.minor })
-            }
-            items={mockRequirements.minor}
-          />
-          <Section
-            title="Specialization"
-            expanded={expanded.specialization}
-            onToggle={() =>
-              setExpanded({
-                ...expanded,
-                specialization: !expanded.specialization,
-              })
-            }
-            items={mockRequirements.specialization}
-          /> */}
-          {/* <div className="flex flex-col gap-2">
-            <h3>Search for more</h3>
-            <SearchSelect
-              placeholder="Search or select a course..."
-              onValueChange={(val) => console.log("Selected course:", val)}
-            />
-          </div> */}
         </aside>
 
         {/* Terms */}
