@@ -5,6 +5,14 @@ export type ReqCourse = {
   code: string;
   group_id?: string;
 };
+
+export const TermType = {
+  F: "fall",
+  W: "winter",
+  S: "spring",
+};
+export type TermType = (typeof TermType)[keyof typeof TermType];
+
 export type Course = {
   id: string;
   code: string;
@@ -13,6 +21,8 @@ export type Course = {
   level?: number;
   prereqs?: ReqCourse[];
   coreqs?: ReqCourse[];
+  offeredOnlineOnly?: boolean;
+  offeredInTerms?: TermType[];
 };
 
 export type Node = Pick<Course, "id" | "code" | "title" | "level">;
@@ -66,11 +76,59 @@ export const getCourseBackPathById = async (
   }
 };
 
+function normalizeCourse(p: {
+  id: string;
+  code: string;
+  title: string;
+  description?: string;
+}): Course {
+  let raw = (p.description ?? "").trim();
+
+  // Extract "Offered: F,W,S"
+  const termMatch = raw.match(/Offered:\s*([FWS,]+)/i);
+  const offeredInTerms: TermType[] | undefined = termMatch
+    ? termMatch[1]
+        .split(",")
+        .map((t) => t.trim().toUpperCase() as keyof typeof TermType)
+        .filter((t) => ["F", "W", "S"].includes(t))
+        .map((t) => TermType[t])
+    : undefined;
+
+  // Extract Online Only
+  const offeredOnlineOnly = /only offered online/i.test(raw);
+
+  // Clean description by removing system suffixes + noise
+  let clean = raw
+    .replace(/Offered:[^\.\n]*/gi, "")
+    .replace(/Prereq:[^\.\n]*/gi, "")
+    .replace(/Antireq:[^\.\n]*/gi, "")
+    .replace(/Coreq:[^\.\n]*/gi, "") // ← remove Coreq
+    .replace(/Only offered Online/gi, "")
+    .replace(/Not open to [^.]+/gi, "")
+    .replace(/\[[^\]]*\]?/g, "") // ← remove [ ... ] and stray "["
+    .replace(/\s+/g, " ")
+    .trim();
+
+  // Remove odd trailing punctuation repetitions
+  clean = clean.replace(/([.,;])\s*$/g, ""); // strip final punctuation
+  clean = clean.replace(/\s*([.,;]){2,}/g, "$1"); // collapse double periods
+
+  return {
+    id: p.id,
+    code: p.code,
+    title: p.title,
+    description: clean,
+    offeredInTerms,
+    offeredOnlineOnly,
+  };
+}
+
 export const getAllCourses = async (): Promise<Course[]> => {
   try {
     const res = (await get(`v1/courses/`)) as any;
 
-    return res.data as Course[];
+    // Normalize all courses before returning
+    return (res.data as Course[]).map((course) => normalizeCourse(course));
   } catch (error: unknown) {
     throw new Error(`Failed to fetch courses with error ${error}`);
   }

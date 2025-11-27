@@ -7,13 +7,13 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import {
-  getAllCourses,
   getCourseBackPathById,
   getCourseById,
   getCourseFrontPathById,
   type Course,
   type CoursePath,
 } from "@/hooks/CourseClient";
+import { useCourses } from "@/contexts/CoursesContext";
 
 export function Test() {
   const [course, setCourse] = useState<Course | null>(null);
@@ -22,7 +22,9 @@ export function Test() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const [allCourses, setAllCourses] = useState<Course[] | null>(null);
+  // Get normalized courses from context
+  const { courses: allCourses } = useCourses();
+
   // Fetch course on mount
   useEffect(() => {
     const loadCourse = async () => {
@@ -58,21 +60,9 @@ export function Test() {
       }
     };
 
-    const loadAllCourses = async () => {
-      try {
-        const result = await getAllCourses(); // OR "123" depending on backend
-        setAllCourses(result);
-      } catch (err: unknown) {
-        setError(`Failed to load courses ${err}`);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     loadCourse();
     loadCourseFrontPath();
     loadCourseBackPath();
-    loadAllCourses();
   }, []);
 
   return (
@@ -207,10 +197,18 @@ export function Test() {
           <div className="space-y-2">
             <p className="font-medium mt-3">All Courses:</p>
             {allCourses && allCourses?.length > 0 ? (
-              <ul className="list-disc ml-6">
+              <ul className="list-disc ml-6 list-none">
                 {allCourses?.map((p) => (
-                  <li key={p.id}>
-                    {p.code} - {p.title}
+                  <li key={p.id} className="border p-4 my-2 rounded-lg">
+                    <p>
+                      {p.code} - {p.title}
+                    </p>
+                    <p>{p.description}</p>
+                    <p>{p.id}</p>
+                    {p.offeredInTerms && (
+                      <p>Offered in terms: {p.offeredInTerms.join(", ")}</p>
+                    )}
+                    {p.offeredOnlineOnly && <p>Offered online only</p>}
                   </li>
                 ))}
               </ul>

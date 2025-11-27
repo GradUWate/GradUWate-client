@@ -12,9 +12,8 @@ import {
 } from "@dnd-kit/core";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SearchSelect } from "@/components/atomic/SearchBar";
+// import { SearchSelect } from "@/components/atomic/SearchBar";
 import {
-  mockCourses,
   mockRequirements,
   mockTerms as initialTerms,
   type Course,
@@ -280,14 +279,13 @@ export function Schedule() {
             }
             items={mockRequirements.specialization}
           />
-          <div className="flex flex-col gap-2">
+          {/* <div className="flex flex-col gap-2">
             <h3>Search for more</h3>
             <SearchSelect
-              options={mockCourses}
               placeholder="Search or select a course..."
               onValueChange={(val) => console.log("Selected course:", val)}
             />
-          </div>
+          </div> */}
         </aside>
 
         {/* Terms */}

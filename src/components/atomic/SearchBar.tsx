@@ -17,29 +17,35 @@ import {
 } from "@/components/ui/command";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-
-type Option = {
-  value: string;
-  label: string;
-};
+import { type Course } from "@/hooks/CourseClient";
 
 interface SearchSelectProps {
-  options: Option[];
   placeholder?: string;
   value?: string;
   onValueChange?: (value: string) => void;
   className?: string;
+  courses?: Course[];
 }
 
 export const SearchSelect: React.FC<SearchSelectProps> = ({
-  options,
   placeholder = "Select...",
   value = "",
   onValueChange,
   className,
+  courses = [],
 }) => {
   const [selectedValue, setSelectedValue] = React.useState<string>(value);
   const [isOpen, setIsOpen] = React.useState(false);
+
+  // Convert Course[] to options format for the search select
+  const options = React.useMemo(
+    () =>
+      courses.map((course) => ({
+        label: `${course.code} - ${course.title}`,
+        value: course.id,
+      })),
+    [courses]
+  );
 
   React.useEffect(() => {
     setSelectedValue(value);

@@ -7,8 +7,8 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { NavbarTabs } from "./components/NavbarTabs";
 import { CourseInfo, Home, Schedule, Test } from "./routes";
-import { TestGraph } from "./routes/TestGraph";
 import { CourseInfoHome } from "./routes/CourseInfoHome";
+import { CoursesProvider } from "./contexts/CoursesContext";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -56,14 +56,6 @@ function AnimatedRoutes() {
             </PageTransition>
           }
         />
-        <Route
-          path="/test-graph"
-          element={
-            <PageTransition>
-              <TestGraph />
-            </PageTransition>
-          }
-        />
       </Routes>
     </AnimatePresence>
   );
@@ -85,12 +77,14 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Router>
-      <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
-        <NavbarTabs />
-        <main className="flex-1">
-          <AnimatedRoutes />
-        </main>
-      </div>
+      <CoursesProvider>
+        <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
+          <NavbarTabs />
+          <main className="flex-1">
+            <AnimatedRoutes />
+          </main>
+        </div>
+      </CoursesProvider>
     </Router>
   );
 }
