@@ -271,22 +271,57 @@ export function Schedule() {
       );
     } else if (activeData?.type === "course") {
       const activeCourse = activeData.course;
-      const activeIndex = targetTerm.courses.findIndex(
-        (c) => c.id === activeCourse.id
-      );
-      const overIndex = targetTerm.courses.findIndex((c) => c.id === over.id);
+      const sourceTermId = activeData.sortable?.containerId;
 
-      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+      // Moving between different terms
+      if (sourceTermId && sourceTermId !== targetTermId) {
+        const overIndex = targetTerm.courses.findIndex((c) => c.id === over.id);
+
         setTerms((prevTerms) =>
-          prevTerms.map((t) =>
-            t.id === targetTermId
-              ? {
-                  ...t,
-                  courses: arrayMove(t.courses, activeIndex, overIndex),
-                }
-              : t
-          )
+          prevTerms.map((t) => {
+            if (t.id === sourceTermId) {
+              // Remove from source term
+              return {
+                ...t,
+                courses: t.courses.filter((c) => c.id !== activeCourse.id),
+              };
+            }
+            if (t.id === targetTermId) {
+              // Add to target term
+              const newCourses = [...t.courses];
+              if (overIndex !== -1) {
+                newCourses.splice(overIndex, 0, activeCourse);
+              } else {
+                newCourses.push(activeCourse);
+              }
+              return { ...t, courses: newCourses };
+            }
+            return t;
+          })
         );
+      } else if (sourceTermId === targetTermId) {
+        // Reordering within the same term
+        const activeIndex = targetTerm.courses.findIndex(
+          (c) => c.id === activeCourse.id
+        );
+        const overIndex = targetTerm.courses.findIndex((c) => c.id === over.id);
+
+        if (
+          activeIndex !== -1 &&
+          overIndex !== -1 &&
+          activeIndex !== overIndex
+        ) {
+          setTerms((prevTerms) =>
+            prevTerms.map((t) =>
+              t.id === targetTermId
+                ? {
+                    ...t,
+                    courses: arrayMove(t.courses, activeIndex, overIndex),
+                  }
+                : t
+            )
+          );
+        }
       }
     }
   }
