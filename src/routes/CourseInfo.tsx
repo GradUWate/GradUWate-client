@@ -68,24 +68,31 @@ export function CourseInfo() {
                   {selectedCourse.description}
                 </p>
               </div>
-              <Separator className="my-2" />
-              <div>
-                <h3 className="font-semibold text-gray-700 mb-2">Offered</h3>
-                {selectedCourse.offeredInTerms?.map((t, i) => (
-                  <div
-                    key={i}
-                    className="flex items-center gap-2 text-sm text-gray-700 capitalize"
-                  >
-                    <Star className="h-4 w-4 text-gray-500" />
-                    <span>{t}</span>
+              {(selectedCourse.offeredInTerms ||
+                selectedCourse.offeredOnlineOnly) && (
+                <>
+                  <Separator className="my-2" />
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-2">
+                      Offered
+                    </h3>
+                    {selectedCourse.offeredInTerms?.map((t, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 text-sm text-gray-700 capitalize"
+                      >
+                        <Star className="h-4 w-4 text-gray-500" />
+                        <span>{t}</span>
+                      </div>
+                    ))}
+                    {selectedCourse.offeredOnlineOnly && (
+                      <div className="flex mt-2 items-center gap-2 text-sm text-gray-700 italic mt-1">
+                        <span>Offered Online Only</span>
+                      </div>
+                    )}
                   </div>
-                ))}
-                {selectedCourse.offeredOnlineOnly && (
-                  <div className="flex mt-2 items-center gap-2 text-sm text-gray-700 italic mt-1">
-                    <span>Offered Online Only</span>
-                  </div>
-                )}
-              </div>
+                </>
+              )}
               <Separator className="my-2" />
               <div>
                 <h3 className="font-semibold text-gray-700 mb-1">Prereqs</h3>
