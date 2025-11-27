@@ -99,8 +99,8 @@ export function CourseGraph({ targetCourseId }: { targetCourseId?: string }) {
 
         backPath.links.forEach((link: APILink) => {
           allLinks.push({
-            source: link.start,
-            target: link.end,
+            source: link.end,
+            target: link.start,
           });
         });
 

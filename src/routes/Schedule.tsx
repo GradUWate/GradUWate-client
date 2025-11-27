@@ -100,6 +100,7 @@ export function Schedule() {
   const sidebarCourses: ScheduleCourse[] = apiCourses.map((course) => ({
     id: course.id,
     code: course.code,
+    courseId: course.id,
     description: course.title || course.description || "",
   }));
 

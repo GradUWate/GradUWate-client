@@ -1,8 +1,15 @@
-import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  type ReactNode,
+} from "react";
 
 export type ScheduleCourse = {
   id: string;
   code: string;
+  courseId: string;
   description: string;
 };
 
@@ -48,26 +55,29 @@ export function SchedulesProvider({ children }: { children: ReactNode }) {
     return newSchedule;
   }, []);
 
-  const updateSchedule = useCallback((
-    id: string,
-    updatedSchedule: Partial<Schedule>
-  ): void => {
-    setSchedules((prev) =>
-      prev.map((schedule) =>
-        schedule.id === id
-          ? { ...schedule, ...updatedSchedule, updatedAt: new Date() }
-          : schedule
-      )
-    );
-  }, []);
+  const updateSchedule = useCallback(
+    (id: string, updatedSchedule: Partial<Schedule>): void => {
+      setSchedules((prev) =>
+        prev.map((schedule) =>
+          schedule.id === id
+            ? { ...schedule, ...updatedSchedule, updatedAt: new Date() }
+            : schedule
+        )
+      );
+    },
+    []
+  );
 
   const deleteSchedule = useCallback((id: string): void => {
     setSchedules((prev) => prev.filter((schedule) => schedule.id !== id));
   }, []);
 
-  const getScheduleById = useCallback((id: string): Schedule | undefined => {
-    return schedules.find((schedule) => schedule.id === id);
-  }, [schedules]);
+  const getScheduleById = useCallback(
+    (id: string): Schedule | undefined => {
+      return schedules.find((schedule) => schedule.id === id);
+    },
+    [schedules]
+  );
 
   return (
     <SchedulesContext.Provider
