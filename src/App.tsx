@@ -6,7 +6,7 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { NavbarTabs } from "./components/NavbarTabs";
-import { CourseInfo, Home, Schedule, Test } from "./routes";
+import { CourseInfo, Home, Schedule } from "./routes";
 import { CourseInfoHome } from "./routes/CourseInfoHome";
 import { CoursesProvider } from "./contexts/CoursesContext";
 import { SchedulesProvider } from "./contexts/SchedulesContext";
@@ -46,14 +46,6 @@ function AnimatedRoutes() {
           element={
             <PageTransition>
               <Schedule />
-            </PageTransition>
-          }
-        />
-        <Route
-          path="/test"
-          element={
-            <PageTransition>
-              <Test />
             </PageTransition>
           }
         />

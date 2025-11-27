@@ -6,7 +6,7 @@ import { Star } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { CourseGraph } from "../components/screens/info/CourseGraph";
 import { useCourses } from "@/contexts/CoursesContext";
-import type { Course } from "@/hooks/CourseClient";
+import { getCourseById, type Course } from "@/hooks/CourseClient";
 
 export function CourseInfo() {
   const { courseId } = useParams();
@@ -19,16 +19,20 @@ export function CourseInfo() {
   };
 
   useEffect(() => {
-    if (!courseId) {
-      navigate("/course-info");
-    }
-    const courseFound = allCourses.find((c) => c.id === courseId) || null;
-    if (!courseFound) {
-      navigate("/course-info");
-      return;
-    }
-    setSelectedCourse(courseFound);
+    const redirect = () => navigate("/course-info");
+
+    const fetchCourse = async () => {
+      if (!courseId) return redirect();
+      const course = await getCourseById(courseId);
+      if (!course) return redirect();
+
+      setSelectedCourse(course);
+    };
+
+    fetchCourse();
   }, [courseId, navigate]);
+
+  if (!selectedCourse) return null;
 
   return (
     <div className="flex h-[calc(100vh-3rem)] p-4 gap-4 overflow-hidden">
@@ -70,18 +74,49 @@ export function CourseInfo() {
                 {selectedCourse.offeredInTerms?.map((t, i) => (
                   <div
                     key={i}
-                    className="flex items-center gap-2 text-sm text-gray-700"
+                    className="flex items-center gap-2 text-sm text-gray-700 capitalize"
                   >
                     <Star className="h-4 w-4 text-gray-500" />
                     <span>{t}</span>
                   </div>
                 ))}
                 {selectedCourse.offeredOnlineOnly && (
-                  <div className="flex mt-2 items-center gap-2 text-sm text-gray-700 font-semibold mt-1">
+                  <div className="flex mt-2 items-center gap-2 text-sm text-gray-700 italic mt-1">
                     <span>Offered Online Only</span>
                   </div>
                 )}
               </div>
+              <Separator className="my-2" />
+              <div>
+                <h3 className="font-semibold text-gray-700 mb-1">Prereqs</h3>
+                <p className="text-sm text-gray-600 leading-relaxed w-full word-wrap">
+                  {selectedCourse.prereqs || "None"}
+                </p>
+              </div>
+              {selectedCourse.antireqs && (
+                <>
+                  <Separator className="my-2" />
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-1">
+                      Antireqs
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed w-full word-wrap">
+                      {selectedCourse.antireqs}
+                    </p>
+                  </div>
+                </>
+              )}
+              {selectedCourse.coreqs && (
+                <>
+                  <Separator className="my-2" />
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-1">Coreqs</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed w-full word-wrap">
+                      {selectedCourse.coreqs}
+                    </p>
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <div className="flex flex-1 items-center justify-center text-gray-500">
@@ -90,7 +125,10 @@ export function CourseInfo() {
           )}
         </Card>
       </aside>
-      <CourseGraph targetCourseId={selectedCourse?.id} />
+      <CourseGraph
+        targetCourseId={selectedCourse?.id}
+        targetCourseName={selectedCourse?.code}
+      />
     </div>
   );
 }

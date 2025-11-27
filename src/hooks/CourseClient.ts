@@ -19,8 +19,9 @@ export type Course = {
   title: string;
   description?: string;
   level?: number;
-  prereqs?: ReqCourse[];
-  coreqs?: ReqCourse[];
+  prereqs?: string;
+  antireqs?: string;
+  coreqs?: string;
   offeredOnlineOnly?: boolean;
   offeredInTerms?: TermType[];
 };
@@ -38,12 +39,70 @@ export type CoursePath = {
   links: Link[];
 };
 
+function normalizeCourse(p: {
+  id: string;
+  code: string;
+  title: string;
+  description?: string;
+}): Course {
+  let raw = (p.description ?? "").trim();
+  raw = raw.replace(/,(\S)/g, ", $1");
+
+  // Extract "Offered: F,W,S"
+  const termMatch = raw.match(/Offered:\s*([FWS,]+)/i);
+  const offeredInTerms: TermType[] | undefined = termMatch
+    ? termMatch[1]
+        .split(",")
+        .map((t) => t.trim().toUpperCase() as keyof typeof TermType)
+        .filter((t) => ["F", "W", "S"].includes(t))
+        .map((t) => TermType[t])
+    : undefined;
+
+  // Extract raw info
+  const offeredOnlineOnly = /only offered online/i.test(raw);
+  const prereqMatch = raw.match(/Prereq:\s*([^\.\n]*)/i);
+  const antireqMatch = raw.match(/Antireq:\s*([^\.\n]*)/i);
+  const coreqMatch = raw.match(/Coreq:\s*([^\.\n]*)/i);
+  const prereqs = prereqMatch?.[1]?.trim() || undefined;
+  const antireqs = antireqMatch?.[1]?.trim() || undefined;
+  const coreqs = coreqMatch?.[1]?.trim() || undefined;
+
+  // Clean description by removing system suffixes + noise
+  let clean = raw
+    .replace(/Offered:[^\.\n]*/gi, "")
+    .replace(/Prereq:[^\.\n]*/gi, "")
+    .replace(/Antireq:[^\.\n]*/gi, "")
+    .replace(/Coreq:[^\.\n]*/gi, "") // ← remove Coreq
+    .replace(/Only offered Online/gi, "")
+    .replace(/Not open to [^.]+/gi, "")
+    .replace(/\[[^\]]*\]?/g, "") // ← remove [ ... ] and stray "["
+    .replace(/\s+/g, " ")
+    .trim();
+  clean += ".";
+
+  // Remove odd trailing punctuation repetitions
+  clean = clean.replace(/([.,;])\s*$/g, ""); // strip final punctuation
+  clean = clean.replace(/\s*([.,;]){2,}/g, "$1"); // collapse double periods
+
+  return {
+    id: p.id,
+    code: p.code,
+    title: p.title,
+    description: clean,
+    prereqs,
+    antireqs,
+    coreqs,
+    offeredInTerms,
+    offeredOnlineOnly,
+  };
+}
+
 export const getCourseById = async (id: string): Promise<Course> => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const res = (await get(`v1/courses/${id}`)) as any;
 
-    return res.data as Course;
+    return normalizeCourse(res.data as Course);
   } catch (error: unknown) {
     throw new Error(`Failed to fetch course with id ${id} with error ${error}`);
   }
@@ -75,53 +134,6 @@ export const getCourseBackPathById = async (
     throw new Error(`Failed to fetch course with id ${id} with error ${error}`);
   }
 };
-
-function normalizeCourse(p: {
-  id: string;
-  code: string;
-  title: string;
-  description?: string;
-}): Course {
-  let raw = (p.description ?? "").trim();
-
-  // Extract "Offered: F,W,S"
-  const termMatch = raw.match(/Offered:\s*([FWS,]+)/i);
-  const offeredInTerms: TermType[] | undefined = termMatch
-    ? termMatch[1]
-        .split(",")
-        .map((t) => t.trim().toUpperCase() as keyof typeof TermType)
-        .filter((t) => ["F", "W", "S"].includes(t))
-        .map((t) => TermType[t])
-    : undefined;
-
-  // Extract Online Only
-  const offeredOnlineOnly = /only offered online/i.test(raw);
-
-  // Clean description by removing system suffixes + noise
-  let clean = raw
-    .replace(/Offered:[^\.\n]*/gi, "")
-    .replace(/Prereq:[^\.\n]*/gi, "")
-    .replace(/Antireq:[^\.\n]*/gi, "")
-    .replace(/Coreq:[^\.\n]*/gi, "") // ← remove Coreq
-    .replace(/Only offered Online/gi, "")
-    .replace(/Not open to [^.]+/gi, "")
-    .replace(/\[[^\]]*\]?/g, "") // ← remove [ ... ] and stray "["
-    .replace(/\s+/g, " ")
-    .trim();
-
-  // Remove odd trailing punctuation repetitions
-  clean = clean.replace(/([.,;])\s*$/g, ""); // strip final punctuation
-  clean = clean.replace(/\s*([.,;]){2,}/g, "$1"); // collapse double periods
-
-  return {
-    id: p.id,
-    code: p.code,
-    title: p.title,
-    description: clean,
-    offeredInTerms,
-    offeredOnlineOnly,
-  };
-}
 
 export const getAllCourses = async (): Promise<Course[]> => {
   try {
