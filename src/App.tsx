@@ -6,19 +6,16 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { NavbarTabs } from "./components/NavbarTabs";
-import { ProtectedRoute } from "./components/ProtectedRoute"; // <--- Import
-import { AuthProvider } from "./context/AuthContext";
-
-// Import your routes
-import { Login } from "./routes/Login"; // <--- Import Login
 import { CourseInfo, Home, Schedule } from "./routes";
 import { CourseInfoHome } from "./routes/CourseInfoHome";
 import { CoursesProvider } from "./contexts/CoursesContext";
 import { SchedulesProvider } from "./contexts/SchedulesContext";
 
-// A wrapper component for the "Private" part of the app
-// This includes the Navbar + The Animated Routes
-const PrivateLayout = () => {
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
+import { Login } from "./routes/Login"; // <--- Import Login
+
+function AnimatedRoutes() {
   const location = useLocation();
 
   return (
@@ -33,7 +30,7 @@ const PrivateLayout = () => {
           }
         />
         <Route
-          path="/course-info"
+          path="/course-info/:courseId"
           element={
             <PageTransition>
               <CourseInfo />
@@ -41,25 +38,25 @@ const PrivateLayout = () => {
           }
         />
         <Route
-          path="/schedule"
+          path="/course-info"
+          element={
+            <PageTransition>
+              <CourseInfoHome />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/schedule/:scheduleId"
           element={
             <PageTransition>
               <Schedule />
             </PageTransition>
           }
         />
-        <Route
-          path="/test"
-          element={
-            <PageTransition>
-              <Test />
-            </PageTransition>
-          }
-        />
       </Routes>
     </AnimatePresence>
   );
-};
+}
 
 function PageTransition({ children }: { children: React.ReactNode }) {
   return (
@@ -74,20 +71,42 @@ function PageTransition({ children }: { children: React.ReactNode }) {
   );
 }
 
+// 2. PRIVATE LAYOUT (The "Inside" of the app)
+// We moved the Providers HERE. This ensures we only fetch courses/schedules
+// if the user is actually logged in.
+const PrivateLayout = () => {
+  return (
+    <CoursesProvider>
+      <SchedulesProvider>
+        <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
+          <NavbarTabs />
+          <main className="flex-1">
+            <AnimatedRoutes />
+          </main>
+        </div>
+      </SchedulesProvider>
+    </CoursesProvider>
+  );
+};
+
 function App() {
   return (
     <AuthProvider>
       <Router>
-        <CoursesProvider>
-          <SchedulesProvider>
-            <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
-              <NavbarTabs />
-              <main className="flex-1">
-                <AnimatedRoutes />
-              </main>
-            </div>
-          </SchedulesProvider>
-        </CoursesProvider>
+        <Routes>
+          {/* PUBLIC: Login Page (No Navbar, No Data Fetching) */}
+          <Route path="/login" element={<Login />} />
+
+          {/* PRIVATE: Everything else */}
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <PrivateLayout />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
       </Router>
     </AuthProvider>
   );
