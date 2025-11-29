@@ -1,12 +1,12 @@
 import { ChevronDown, ChevronUp } from "lucide-react";
 import { DraggableCourseTile } from "./CourseTile";
-import type { Course } from "@/modules/mockData/schedule";
+import type { ScheduleCourse } from "@/contexts/SchedulesContext";
 
 type SectionProps = {
   title: string;
   expanded: boolean;
   onToggle: () => void;
-  items: Course[];
+  items: ScheduleCourse[];
 };
 
 export function Section({ title, expanded, onToggle, items }: SectionProps) {

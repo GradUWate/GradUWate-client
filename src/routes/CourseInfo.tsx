@@ -1,66 +1,52 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
-import { mockCourses } from "@/modules/mockData/schedule";
 import { SearchSelect } from "@/components/atomic/SearchBar";
 import { Separator } from "@/components/ui/separator";
 import { Star } from "lucide-react";
-
-type CourseData = {
-  value: string;
-  label: string;
-  easiness: number;
-  usefulness: number;
-  description: string;
-  professors: string[];
-};
-
-const courseData: CourseData[] = [
-  {
-    value: "cs134",
-    label: "CS 134 - Introduction to Computer Science",
-    easiness: 78,
-    usefulness: 85,
-    description:
-      "An introduction to the fundamentals of programming and computer science. Covers problem solving, algorithms, and basic programming constructs.",
-    professors: ["Dr. Ada Lovelace"],
-  },
-  {
-    value: "cs240",
-    label: "CS 240 - Data Structures and Algorithms",
-    easiness: 56,
-    usefulness: 63,
-    description:
-      "Introduction to widely used and effective methods of data organization, focusing on data structures, their algorithms, and performance. Topics include priority queues, sorting, dictionaries, and text processing data structures.",
-    professors: ["Mr Bean"],
-  },
-  {
-    value: "cs320",
-    label: "CS 320 - Artificial Intelligence",
-    easiness: 48,
-    usefulness: 92,
-    description:
-      "Covers the foundations of artificial intelligence, including search algorithms, machine learning, and reasoning under uncertainty.",
-    professors: ["Dr. Alan Turing", "Prof. Marvin Minsky"],
-  },
-];
+import { useNavigate, useParams } from "react-router-dom";
+import { CourseGraph } from "../components/screens/info/CourseGraph";
+import { useCourses } from "@/contexts/CoursesContext";
+import { getCourseById, type Course } from "@/hooks/CourseClient";
 
 export function CourseInfo() {
-  const [selectedCourse, setSelectedCourse] = useState<CourseData | null>(null);
+  const { courseId } = useParams();
+  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const { courses: allCourses, loading } = useCourses();
+  const navigate = useNavigate();
 
   const handleSelect = (value: string) => {
-    const found = courseData.find((c) => c.value === value) || null;
-    setSelectedCourse(found);
+    navigate(`/course-info/${value}`);
   };
+
+  useEffect(() => {
+    const redirect = () => navigate("/course-info");
+
+    const fetchCourse = async () => {
+      if (!courseId) return redirect();
+      const course = await getCourseById(courseId);
+      if (!course) return redirect();
+
+      setSelectedCourse(course);
+    };
+
+    fetchCourse();
+  }, [courseId, navigate]);
+
+  if (!selectedCourse) return null;
 
   return (
     <div className="flex h-[calc(100vh-3rem)] p-4 gap-4 overflow-hidden">
       <aside className="w-1/4 flex-shrink-0 h-full bg-white border rounded-md p-4 flex flex-col">
         <div className="mb-4 w-full min-w-0">
-          <SearchSelect
-            options={mockCourses}
-            placeholder="Search or select a course..."
-            onValueChange={handleSelect}
-          />
+          {loading ? (
+            <p className="text-sm text-gray-500">Loading courses...</p>
+          ) : (
+            <SearchSelect
+              placeholder="Search or select a course..."
+              onValueChange={handleSelect}
+              courses={allCourses}
+            />
+          )}
         </div>
         <Card className="flex-1 min-h-0 p-6 overflow-y-auto">
           {selectedCourse ? (
@@ -70,22 +56,7 @@ export function CourseInfo() {
                   Selected Course:
                 </h2>
                 <p className="text-2xl font-bold text-gray-800">
-                  {selectedCourse.label.split("-")[0].trim()}
-                </p>
-              </div>
-
-              <div className="mt-2 space-y-1 text-sm">
-                <p>
-                  <span className="font-semibold text-gray-700">
-                    Easiness:{" "}
-                  </span>
-                  {selectedCourse.easiness}%
-                </p>
-                <p>
-                  <span className="font-semibold text-gray-700">
-                    Usefulness:{" "}
-                  </span>
-                  {selectedCourse.usefulness}%
+                  {selectedCourse.code}
                 </p>
               </div>
               <Separator className="my-2" />
@@ -97,21 +68,62 @@ export function CourseInfo() {
                   {selectedCourse.description}
                 </p>
               </div>
+              {(selectedCourse.offeredInTerms ||
+                selectedCourse.offeredOnlineOnly) && (
+                <>
+                  <Separator className="my-2" />
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-2">
+                      Offered
+                    </h3>
+                    {selectedCourse.offeredInTerms?.map((t, i) => (
+                      <div
+                        key={i}
+                        className="flex items-center gap-2 text-sm text-gray-700 capitalize"
+                      >
+                        <Star className="h-4 w-4 text-gray-500" />
+                        <span>{t}</span>
+                      </div>
+                    ))}
+                    {selectedCourse.offeredOnlineOnly && (
+                      <div className="flex mt-2 items-center gap-2 text-sm text-gray-700 italic mt-1">
+                        <span>Offered Online Only</span>
+                      </div>
+                    )}
+                  </div>
+                </>
+              )}
               <Separator className="my-2" />
               <div>
-                <h3 className="font-semibold text-gray-700 mb-2">
-                  Recommended Professors
-                </h3>
-                {selectedCourse.professors.map((prof) => (
-                  <div
-                    key={prof}
-                    className="flex items-center gap-2 text-sm text-gray-700"
-                  >
-                    <Star className="h-4 w-4 text-gray-500" />
-                    <span>{prof}</span>
-                  </div>
-                ))}
+                <h3 className="font-semibold text-gray-700 mb-1">Prereqs</h3>
+                <p className="text-sm text-gray-600 leading-relaxed w-full word-wrap">
+                  {selectedCourse.prereqs || "None"}
+                </p>
               </div>
+              {selectedCourse.antireqs && (
+                <>
+                  <Separator className="my-2" />
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-1">
+                      Antireqs
+                    </h3>
+                    <p className="text-sm text-gray-600 leading-relaxed w-full word-wrap">
+                      {selectedCourse.antireqs}
+                    </p>
+                  </div>
+                </>
+              )}
+              {selectedCourse.coreqs && (
+                <>
+                  <Separator className="my-2" />
+                  <div>
+                    <h3 className="font-semibold text-gray-700 mb-1">Coreqs</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed w-full word-wrap">
+                      {selectedCourse.coreqs}
+                    </p>
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <div className="flex flex-1 items-center justify-center text-gray-500">
@@ -120,9 +132,10 @@ export function CourseInfo() {
           )}
         </Card>
       </aside>
-      <Card className="flex-1 flex-shrink-0 h-full bg-gray-200 px-4">
-        Course Pathways
-      </Card>
+      <CourseGraph
+        targetCourseId={selectedCourse?.id}
+        targetCourseName={selectedCourse?.code}
+      />
     </div>
   );
 }

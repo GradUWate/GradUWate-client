@@ -6,7 +6,10 @@ import {
 } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import { NavbarTabs } from "./components/NavbarTabs";
-import { CourseInfo, Home, Schedule, Test } from "./routes";
+import { CourseInfo, Home, Schedule } from "./routes";
+import { CourseInfoHome } from "./routes/CourseInfoHome";
+import { CoursesProvider } from "./contexts/CoursesContext";
+import { SchedulesProvider } from "./contexts/SchedulesContext";
 
 function AnimatedRoutes() {
   const location = useLocation();
@@ -23,7 +26,7 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/course-info"
+          path="/course-info/:courseId"
           element={
             <PageTransition>
               <CourseInfo />
@@ -31,23 +34,22 @@ function AnimatedRoutes() {
           }
         />
         <Route
-          path="/schedule"
+          path="/course-info"
+          element={
+            <PageTransition>
+              <CourseInfoHome />
+            </PageTransition>
+          }
+        />
+        <Route
+          path="/schedule/:scheduleId"
           element={
             <PageTransition>
               <Schedule />
             </PageTransition>
           }
         />
-        <Route
-          path="/test"
-          element={
-            <PageTransition>
-              <Test />
-            </PageTransition>
-          }
-        />
       </Routes>
-      
     </AnimatePresence>
   );
 }
@@ -68,12 +70,16 @@ function PageTransition({ children }: { children: React.ReactNode }) {
 function App() {
   return (
     <Router>
-      <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
-        <NavbarTabs />
-        <main className="flex-1">
-          <AnimatedRoutes />
-        </main>
-      </div>
+      <CoursesProvider>
+        <SchedulesProvider>
+          <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
+            <NavbarTabs />
+            <main className="flex-1">
+              <AnimatedRoutes />
+            </main>
+          </div>
+        </SchedulesProvider>
+      </CoursesProvider>
     </Router>
   );
 }

@@ -2,12 +2,15 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { GripVertical } from "lucide-react";
 import { Card } from "@/components/ui/card";
-import type { Course } from "@/modules/mockData/schedule";
 import {
   type AnimateLayoutChanges,
   defaultAnimateLayoutChanges,
 } from "@dnd-kit/sortable";
 import { useDraggable } from "@dnd-kit/core";
+import type { ScheduleCourse } from "@/contexts/SchedulesContext";
+import { SquareArrowOutUpRight } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const animateLayoutChanges: AnimateLayoutChanges = (args) => {
   const { isSorting, wasDragging } = args;
@@ -19,7 +22,7 @@ const animateLayoutChanges: AnimateLayoutChanges = (args) => {
   return true;
 };
 
-export function SortableCourseTile({ course }: { course: Course }) {
+export function SortableCourseTile({ course }: { course: ScheduleCourse }) {
   const {
     attributes,
     listeners,
@@ -32,13 +35,16 @@ export function SortableCourseTile({ course }: { course: Course }) {
     data: { type: "course", course },
     animateLayoutChanges,
   });
-
+  const navigate = useNavigate();
   const style = {
     transform: CSS.Transform.toString(transform),
     transition: transition || "transform 200ms ease",
   };
 
   const isTemp = course.id.startsWith("temp-");
+  const handleCourseLinkClick = () => {
+    navigate(`/course-info/${course.courseId}`);
+  };
 
   return (
     <Card
@@ -70,7 +76,18 @@ export function SortableCourseTile({ course }: { course: Course }) {
         `}
       />
       <div className="flex-1 min-w-0">
-        <p className="font-medium truncate">{course.code}</p>
+        <div className="flex gap-2 items-center">
+          <p className="font-medium truncate">{course.code}</p>
+          <Button
+            variant="ghost"
+            size="icon"
+            asChild
+            onClick={handleCourseLinkClick}
+            className="w-fit h-full"
+          >
+            <SquareArrowOutUpRight className="h-fill aspect-square" />
+          </Button>
+        </div>
         {course.description && (
           <p className="text-sm text-gray-500 truncate">{course.description}</p>
         )}
@@ -79,7 +96,7 @@ export function SortableCourseTile({ course }: { course: Course }) {
   );
 }
 
-export function DraggableCourseTile({ course }: { course: Course }) {
+export function DraggableCourseTile({ course }: { course: ScheduleCourse }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
       id: course.id,

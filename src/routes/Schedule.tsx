@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   DndContext,
   type DragEndEvent,
@@ -12,26 +12,68 @@ import {
 } from "@dnd-kit/core";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { SearchSelect } from "@/components/atomic/SearchBar";
-import {
-  mockCourses,
-  mockRequirements,
-  mockTerms as initialTerms,
-  type Course,
-  type Term,
-} from "@/modules/mockData/schedule";
+// import { SearchSelect } from "@/components/atomic/SearchBar";
 import { TermColumn, Section } from "@/components/screens/schedule";
 import { arrayMove } from "@dnd-kit/sortable";
+import { useCourses } from "@/contexts/CoursesContext";
+import {
+  useSchedules,
+  type ScheduleTerm,
+  type ScheduleCourse,
+} from "@/contexts/SchedulesContext";
+import { useParams, useNavigate } from "react-router-dom";
+import { Plus } from "lucide-react";
 
 export function Schedule() {
+  const { scheduleId } = useParams<{ scheduleId: string }>();
+  const navigate = useNavigate();
+  const { courses: apiCourses } = useCourses();
+  const { getScheduleById, updateSchedule } = useSchedules();
+
   const [expanded, setExpanded] = useState({
-    major: true,
-    minor: false,
-    specialization: false,
+    allCourses: true,
   });
 
-  const [terms, setTerms] = useState<Term[]>(initialTerms);
-  const [activeCourse, setActiveCourse] = useState<Course | null>(null);
+  const [terms, setTerms] = useState<ScheduleTerm[]>([]);
+  const [activeCourse, setActiveCourse] = useState<ScheduleCourse | null>(null);
+
+  // Load schedule data when component mounts or scheduleId changes
+  useEffect(() => {
+    if (!scheduleId) {
+      navigate("/");
+      return;
+    }
+
+    const schedule = getScheduleById(scheduleId);
+    if (!schedule) {
+      navigate("/");
+      return;
+    }
+
+    // Convert ScheduleTerm[] to Term[] for compatibility
+    const convertedTerms: ScheduleTerm[] = schedule.terms.map((term) => ({
+      id: term.id,
+      name: term.name,
+      courses: term.courses,
+    }));
+
+    setTerms(convertedTerms);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [scheduleId]);
+
+  // Save terms to schedule context whenever they change
+  useEffect(() => {
+    if (!scheduleId) return;
+
+    const convertedTerms: ScheduleTerm[] = terms.map((term) => ({
+      id: term.id,
+      name: term.name,
+      courses: term.courses,
+    }));
+
+    updateSchedule(scheduleId, { terms: convertedTerms });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [terms, scheduleId]);
 
   const sensors = useSensors(
     useSensor(MouseSensor, {
@@ -54,9 +96,18 @@ export function Schedule() {
     return null;
   };
 
+  // Convert API courses to match the mock Course type format for drag-and-drop
+  const sidebarCourses: ScheduleCourse[] = apiCourses.map((course) => ({
+    id: course.id,
+    code: course.code,
+    courseId: course.id,
+    description: course.title || course.description || "",
+  }));
+
   const allCourses = [
     ...terms.flatMap((term) => term.courses),
-    ...Object.values(mockRequirements).flatMap((reqCourses) => reqCourses),
+    ...sidebarCourses,
+    // ...Object.values(mockRequirements).flatMap((reqCourses) => reqCourses),
   ];
 
   function handleDragStart(event: any) {
@@ -138,7 +189,7 @@ export function Schedule() {
                   return { ...t, courses: newCourses };
                 }
               } else {
-                const tempCourse: Course = {
+                const tempCourse: ScheduleCourse = {
                   ...activeCourse,
                   id: `temp-${activeCourse.id}`,
                 };
@@ -197,7 +248,7 @@ export function Schedule() {
 
     if (fromSidebar && activeData?.type === "course") {
       const activeCourse = activeData.course;
-      const newCourse: Course = {
+      const newCourse: ScheduleCourse = {
         ...activeCourse,
         id: `${activeCourse.id}-${Math.random().toString(36).slice(2, 6)}`,
         code: activeCourse.code,
@@ -221,25 +272,74 @@ export function Schedule() {
       );
     } else if (activeData?.type === "course") {
       const activeCourse = activeData.course;
-      const activeIndex = targetTerm.courses.findIndex(
-        (c) => c.id === activeCourse.id
-      );
-      const overIndex = targetTerm.courses.findIndex((c) => c.id === over.id);
+      const sourceTermId = activeData.sortable?.containerId;
 
-      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+      // Moving between different terms
+      if (sourceTermId && sourceTermId !== targetTermId) {
+        const overIndex = targetTerm.courses.findIndex((c) => c.id === over.id);
+
         setTerms((prevTerms) =>
-          prevTerms.map((t) =>
-            t.id === targetTermId
-              ? {
-                  ...t,
-                  courses: arrayMove(t.courses, activeIndex, overIndex),
-                }
-              : t
-          )
+          prevTerms.map((t) => {
+            if (t.id === sourceTermId) {
+              // Remove from source term
+              return {
+                ...t,
+                courses: t.courses.filter((c) => c.id !== activeCourse.id),
+              };
+            }
+            if (t.id === targetTermId) {
+              // Add to target term
+              const newCourses = [...t.courses];
+              if (overIndex !== -1) {
+                newCourses.splice(overIndex, 0, activeCourse);
+              } else {
+                newCourses.push(activeCourse);
+              }
+              return { ...t, courses: newCourses };
+            }
+            return t;
+          })
         );
+      } else if (sourceTermId === targetTermId) {
+        // Reordering within the same term
+        const activeIndex = targetTerm.courses.findIndex(
+          (c) => c.id === activeCourse.id
+        );
+        const overIndex = targetTerm.courses.findIndex((c) => c.id === over.id);
+
+        if (
+          activeIndex !== -1 &&
+          overIndex !== -1 &&
+          activeIndex !== overIndex
+        ) {
+          setTerms((prevTerms) =>
+            prevTerms.map((t) =>
+              t.id === targetTermId
+                ? {
+                    ...t,
+                    courses: arrayMove(t.courses, activeIndex, overIndex),
+                  }
+                : t
+            )
+          );
+        }
       }
     }
   }
+
+  const handleAddTerm = () => {
+    const newTermNumber = terms.length + 1;
+    const newTerm: ScheduleTerm = {
+      id: `term-${Date.now()}`,
+      name: `Term ${newTermNumber}`,
+      courses: [],
+    };
+    setTerms([...terms, newTerm]);
+  };
+
+  const getTotalCourses = () => {
+    return terms.reduce((acc, term) => acc + term.courses.length, 0);
+  };
 
   return (
     <div className="flex h-[calc(100vh-3rem)] p-4 gap-4 overflow-hidden">
@@ -252,58 +352,46 @@ export function Schedule() {
       >
         {/* Sidebar */}
         <aside className="w-1/4 h-full bg-white border rounded-md p-4 flex flex-col gap-4 overflow-y-auto">
-          <h2>Relevant Courses</h2>
+          <h2>All Courses</h2>
           <Section
-            title="Major"
-            expanded={expanded.major}
+            title="All Courses"
+            expanded={expanded.allCourses}
             onToggle={() =>
-              setExpanded({ ...expanded, major: !expanded.major })
+              setExpanded({ ...expanded, allCourses: !expanded.allCourses })
             }
-            items={mockRequirements.major}
+            items={sidebarCourses}
           />
-          <Section
-            title="Minor"
-            expanded={expanded.minor}
-            onToggle={() =>
-              setExpanded({ ...expanded, minor: !expanded.minor })
-            }
-            items={mockRequirements.minor}
-          />
-          <Section
-            title="Specialization"
-            expanded={expanded.specialization}
-            onToggle={() =>
-              setExpanded({
-                ...expanded,
-                specialization: !expanded.specialization,
-              })
-            }
-            items={mockRequirements.specialization}
-          />
-          <div className="flex flex-col gap-2">
-            <h3>Search for more</h3>
-            <SearchSelect
-              options={mockCourses}
-              placeholder="Search or select a course..."
-              onValueChange={(val) => console.log("Selected course:", val)}
-            />
-          </div>
         </aside>
 
         {/* Terms */}
         <div className="flex flex-col gap-2 flex-1 min-w-0 h-full">
           <Card className="flex flex-row justify-between gap-4 px-4 items-center">
             <div>
-              <span>Credit Count: </span>
-              <span>12/24</span>
+              <span className="font-medium">Total Courses: </span>
+              <span>{getTotalCourses()}</span>
             </div>
-            <Button>Add additional study term</Button>
+            <Button onClick={handleAddTerm}>
+              <Plus className="mr-2 h-4 w-4" />
+              Add Study Term
+            </Button>
           </Card>
 
-          <main className="flex gap-4 overflow-x-auto pb-4 h-full scrollbar-thin">
-            {terms.map((term) => (
-              <TermColumn term={term} />
-            ))}
+          <main className="flex gap-4 overflow-x-auto h-full scrollbar-thin">
+            {terms.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="text-center">
+                  <p className="text-gray-500 mb-4">
+                    No terms yet. Add a term to start building your schedule!
+                  </p>
+                  <Button onClick={handleAddTerm}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Add Your First Term
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              terms.map((term) => <TermColumn key={term.id} term={term} />)
+            )}
           </main>
         </div>
 
