@@ -6,6 +6,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import { useAuth } from "@/context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { useSchedules } from "@/contexts/SchedulesContext";
 import { Plus, Pencil, Trash2 } from "lucide-react";
@@ -23,6 +24,7 @@ import { Label } from "@/components/ui/label";
 
 export function Home() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const { schedules, createSchedule, deleteSchedule } = useSchedules();
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newScheduleName, setNewScheduleName] = useState("");
@@ -51,7 +53,9 @@ export function Home() {
   return (
     <div className="p-6 space-y-6">
       <div className="rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 text-white p-6 shadow-md">
-        <h1 className="text-3xl font-bold">Hi, prospective graduate! 🎓</h1>
+        <h1 className="text-3xl font-bold">
+          Hi, {user?.displayName || "Goose (Guest)"}! 🎓
+        </h1>
         <p className="text-lg mt-2">
           Let's start planning for{" "}
           <span className="font-semibold">GradUWation</span>!

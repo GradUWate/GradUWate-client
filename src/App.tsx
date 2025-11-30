@@ -11,6 +11,10 @@ import { CourseInfoHome } from "./routes/CourseInfoHome";
 import { CoursesProvider } from "./contexts/CoursesContext";
 import { SchedulesProvider } from "./contexts/SchedulesContext";
 
+import { ProtectedRoute } from "./components/ProtectedRoute";
+import { AuthProvider } from "./context/AuthContext";
+import { Login } from "./routes/Login"; // <--- Import Login
+
 function AnimatedRoutes() {
   const location = useLocation();
 
@@ -67,20 +71,44 @@ function PageTransition({ children }: { children: React.ReactNode }) {
   );
 }
 
+// 2. PRIVATE LAYOUT (The "Inside" of the app)
+// We moved the Providers HERE. This ensures we only fetch courses/schedules
+// if the user is actually logged in.
+const PrivateLayout = () => {
+  return (
+    <CoursesProvider>
+      <SchedulesProvider>
+        <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
+          <NavbarTabs />
+          <main className="flex-1">
+            <AnimatedRoutes />
+          </main>
+        </div>
+      </SchedulesProvider>
+    </CoursesProvider>
+  );
+};
+
 function App() {
   return (
-    <Router>
-      <CoursesProvider>
-        <SchedulesProvider>
-          <div className="flex flex-col min-h-screen py-4 overflow-y-hidden">
-            <NavbarTabs />
-            <main className="flex-1">
-              <AnimatedRoutes />
-            </main>
-          </div>
-        </SchedulesProvider>
-      </CoursesProvider>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <Routes>
+          {/* PUBLIC: Login Page (No Navbar, No Data Fetching) */}
+          <Route path="/login" element={<Login />} />
+
+          {/* PRIVATE: Everything else */}
+          <Route
+            path="/*"
+            element={
+              <ProtectedRoute>
+                <PrivateLayout />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </Router>
+    </AuthProvider>
   );
 }
 
