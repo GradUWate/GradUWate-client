@@ -54,7 +54,7 @@ export function CourseGraph({
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const graphRef = useRef<any>(null);
-  const NODE_RADIUS = 12;
+  const NODE_RADIUS = 20;
 
   useEffect(() => {
     const loadPaths = async () => {
@@ -145,6 +145,19 @@ export function CourseGraph({
 
     loadPaths();
   }, [targetCourseId]);
+
+  useEffect(() => {
+    // Access the link force and set a custom distance
+    graphRef?.current?.d3Force("link").distance(NODE_RADIUS * 4);
+    // Set fixed distance to 100px
+
+    // You can also provide a function to set distances dynamically per link
+    // fgRef.current.d3Force('link').distance(link => link.myDesiredDistanceAttribute);
+
+    // Increase the charge (repulsion force) between nodes to spread them out further
+    // The default strength is -30, a larger negative value increases repulsion
+    // graphRef.current.d3Force("charge").strength(-120);
+  }, [graphData, graphRef]);
 
   return (
     <Card className="w-full h-full bg-gray-100 px-4 py-4 flex flex-col overflow-hidden">

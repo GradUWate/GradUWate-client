@@ -23,6 +23,7 @@ export type Course = {
   antireqs?: string;
   coreqs?: string;
   offeredOnlineOnly?: boolean;
+  offeredOnline?: boolean;
   offeredInTerms?: TermType[];
 };
 
@@ -60,20 +61,23 @@ function normalizeCourse(p: {
 
   // Extract raw info
   const offeredOnlineOnly = /only offered online/i.test(raw);
-  const prereqMatch = raw.match(/Prereq:\s*([^\.\n]*)/i);
-  const antireqMatch = raw.match(/Antireq:\s*([^\.\n]*)/i);
-  const coreqMatch = raw.match(/Coreq:\s*([^\.\n]*)/i);
+  const offeredOnline = /also offered online/i.test(raw);
+  let clean = raw
+    .replace(/Only offered Online/gi, "")
+    .replace(/Also offered Online/gi, "");
+  const prereqMatch = clean.match(/Prereq:\s*([^\.\n]*)/i);
+  const antireqMatch = clean.match(/Antireq:\s*([^\.\n]*)/i);
+  const coreqMatch = clean.match(/Coreq:\s*([^\.\n]*)/i);
   const prereqs = prereqMatch?.[1]?.trim() || undefined;
   const antireqs = antireqMatch?.[1]?.trim() || undefined;
   const coreqs = coreqMatch?.[1]?.trim() || undefined;
 
   // Clean description by removing system suffixes + noise
-  let clean = raw
+  clean = clean
     .replace(/Offered:[^\.\n]*/gi, "")
     .replace(/Prereq:[^\.\n]*/gi, "")
     .replace(/Antireq:[^\.\n]*/gi, "")
     .replace(/Coreq:[^\.\n]*/gi, "") // ← remove Coreq
-    .replace(/Only offered Online/gi, "")
     .replace(/Not open to [^.]+/gi, "")
     .replace(/\[[^\]]*\]?/g, "") // ← remove [ ... ] and stray "["
     .replace(/\s+/g, " ")
@@ -94,6 +98,7 @@ function normalizeCourse(p: {
     coreqs,
     offeredInTerms,
     offeredOnlineOnly,
+    offeredOnline,
   };
 }
 
@@ -114,7 +119,6 @@ export const getCourseFrontPathById = async (
   try {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const res = (await get(`v1/courses/${id}/frontpath`)) as any;
-    console.log("RES", res);
 
     return res.data as CoursePath;
   } catch (error: unknown) {

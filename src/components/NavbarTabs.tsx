@@ -21,7 +21,6 @@ export function NavbarTabs() {
         <TabsList>
           <TabsTrigger value="home">Home</TabsTrigger>
           <TabsTrigger value="course-info">Course Info</TabsTrigger>
-          <TabsTrigger value="schedule">Schedule</TabsTrigger>
         </TabsList>
       </Tabs>
 

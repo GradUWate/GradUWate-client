@@ -97,26 +97,20 @@ export function SortableCourseTile({ course }: { course: ScheduleCourse }) {
 }
 
 export function DraggableCourseTile({ course }: { course: ScheduleCourse }) {
-  const { attributes, listeners, setNodeRef, transform, isDragging } =
+  const { attributes, listeners, setNodeRef, isDragging } =
     useDraggable({
       id: course.id,
       data: { type: "course", course },
     });
 
-  const style = {
-    transform: transform
-      ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
-      : undefined,
-    opacity: isDragging ? 0.5 : 1,
-  };
-
   return (
     <Card
       ref={setNodeRef}
-      style={style}
       {...attributes}
       {...listeners}
-      className="flex flex-row items-start gap-2 p-3 bg-gray-100 cursor-grab active:cursor-grabbing"
+      className={`flex flex-row items-start gap-2 p-3 bg-gray-100 cursor-grab active:cursor-grabbing transition-opacity ${
+        isDragging ? "opacity-40" : "opacity-100"
+      }`}
     >
       <GripVertical className="w-4 h-4 mt-1 text-gray-500" />
       <div>

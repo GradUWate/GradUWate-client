@@ -74,7 +74,7 @@ export function CourseInfo() {
                   <Separator className="my-2" />
                   <div>
                     <h3 className="font-semibold text-gray-700 mb-2">
-                      Offered
+                      Offerings
                     </h3>
                     {selectedCourse.offeredInTerms?.map((t, i) => (
                       <div
@@ -88,6 +88,11 @@ export function CourseInfo() {
                     {selectedCourse.offeredOnlineOnly && (
                       <div className="flex mt-2 items-center gap-2 text-sm text-gray-700 italic mt-1">
                         <span>Offered Online Only</span>
+                      </div>
+                    )}
+                    {selectedCourse.offeredOnline && (
+                      <div className="flex mt-2 items-center gap-2 text-sm text-gray-700 italic mt-1">
+                        <span>Also offered online</span>
                       </div>
                     )}
                   </div>

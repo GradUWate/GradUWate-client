@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   DndContext,
   type DragEndEvent,
@@ -23,6 +23,7 @@ import {
 } from "@/contexts/SchedulesContext";
 import { useParams, useNavigate } from "react-router-dom";
 import { Plus } from "lucide-react";
+import { SUBJECTS } from "@/lib/courses";
 
 export function Schedule() {
   const { scheduleId } = useParams<{ scheduleId: string }>();
@@ -30,9 +31,7 @@ export function Schedule() {
   const { courses: apiCourses } = useCourses();
   const { getScheduleById, updateSchedule } = useSchedules();
 
-  const [expanded, setExpanded] = useState({
-    allCourses: true,
-  });
+  const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
   const [terms, setTerms] = useState<ScheduleTerm[]>([]);
   const [activeCourse, setActiveCourse] = useState<ScheduleCourse | null>(null);
@@ -97,18 +96,43 @@ export function Schedule() {
   };
 
   // Convert API courses to match the mock Course type format for drag-and-drop
-  const sidebarCourses: ScheduleCourse[] = apiCourses.map((course) => ({
-    id: course.id,
-    code: course.code,
-    courseId: course.id,
-    description: course.title || course.description || "",
-  }));
+  const sidebarCourses: ScheduleCourse[] = useMemo(
+    () =>
+      apiCourses.map((course) => ({
+        id: course.id,
+        code: course.code,
+        courseId: course.id,
+        description: course.title || course.description || "",
+      })),
+    [apiCourses]
+  );
 
-  const allCourses = [
-    ...terms.flatMap((term) => term.courses),
-    ...sidebarCourses,
-    // ...Object.values(mockRequirements).flatMap((reqCourses) => reqCourses),
-  ];
+  // Group courses by subject prefix
+  const coursesBySubject = useMemo(() => {
+    const grouped: Record<string, ScheduleCourse[]> = {};
+
+    sidebarCourses.forEach((course) => {
+      const subject = SUBJECTS.find((sub) => course.code.startsWith(sub));
+      if (subject) {
+        if (!grouped[subject]) {
+          grouped[subject] = [];
+        }
+        grouped[subject].push(course);
+      }
+    });
+
+    // Sort subjects alphabetically and filter out empty ones
+    return Object.fromEntries(
+      Object.entries(grouped)
+        .filter(([_, courses]) => courses.length > 0)
+        .sort(([a], [b]) => a.localeCompare(b))
+    );
+  }, [sidebarCourses]);
+
+  const allCourses = useMemo(
+    () => [...terms.flatMap((term) => term.courses), ...sidebarCourses],
+    [terms, sidebarCourses]
+  );
 
   function handleDragStart(event: any) {
     const { active } = event;
@@ -352,15 +376,20 @@ export function Schedule() {
       >
         {/* Sidebar */}
         <aside className="w-1/4 h-full bg-white border rounded-md p-4 flex flex-col gap-4 overflow-y-auto">
-          <h2>All Courses</h2>
-          <Section
-            title="All Courses"
-            expanded={expanded.allCourses}
-            onToggle={() =>
-              setExpanded({ ...expanded, allCourses: !expanded.allCourses })
-            }
-            items={sidebarCourses}
-          />
+          <p className="text-sm text-gray-600">
+            Drag courses onto your schedule
+          </p>
+          {Object.entries(coursesBySubject).map(([subject, courses]) => (
+            <Section
+              key={subject}
+              title={`${subject} (${courses.length})`}
+              expanded={expanded[subject] || false}
+              onToggle={() =>
+                setExpanded({ ...expanded, [subject]: !expanded[subject] })
+              }
+              items={courses}
+            />
+          ))}
         </aside>
 
         {/* Terms */}
@@ -378,15 +407,11 @@ export function Schedule() {
 
           <main className="flex gap-4 overflow-x-auto h-full scrollbar-thin">
             {terms.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
+              <div className="flex-1 flex items-center justify-center border rounded-md border-dashed bg-white">
                 <div className="text-center">
-                  <p className="text-gray-500 mb-4">
+                  <p className="text-gray-400 mb-4">
                     No terms yet. Add a term to start building your schedule!
                   </p>
-                  <Button onClick={handleAddTerm}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Add Your First Term
-                  </Button>
                 </div>
               </div>
             ) : (
