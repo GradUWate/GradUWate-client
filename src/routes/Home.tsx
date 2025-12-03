@@ -54,7 +54,7 @@ export function Home() {
     <div className="p-6 space-y-6">
       <div className="rounded-lg bg-gradient-to-r from-pink-500 to-purple-600 text-white p-6 shadow-md">
         <h1 className="text-3xl font-bold">
-          Hi, {user?.displayName || "Goose (Guest)"}! 🎓
+          Hi, {user?.displayName?.split(" ")[0] || "Goose (Guest)"}! 🎓
         </h1>
         <p className="text-lg mt-2">
           Let's start planning for{" "}
